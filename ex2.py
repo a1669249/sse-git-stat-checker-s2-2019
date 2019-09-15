@@ -1,7 +1,7 @@
-import sys
-import os
-import re
-from git import Repo
+import sys # argv, exit
+import os # path
+import re # match
+from git import Repo # GitPython
 
 GITFOLDER = '/mnt/e/Documents/GitHub/' # Change this to the directory where you store your Repo's
 
@@ -74,8 +74,8 @@ authorPerFile = {}
 authorAndCommits = {}
 
 for file in commit.stats.files:
-	dirName = os.path.dirname(file);
-	fileName = os.path.basename(file);
+	dirName = os.path.dirname(file); # Extract directory name from path
+	fileName = os.path.basename(file); # Extract file name from path
 	
 	fileList.append(fileName)
 
@@ -84,24 +84,28 @@ for file in commit.stats.files:
 	if dirName not in dirList:
 		dirList.append(dirName)
 
-	time1 = int(repo.git.log(commit,'--', file,n=1,format="%cd",date='unix'))
-	time2 = int(repo.git.log(commit,'--', file,n=1,skip=1,format="%cd",date='unix'))
+	time1 = int(repo.git.log(commit,'--', file,n=1,format="%cd",date='unix')) # Time of our fixing commit 
+	time2 = int(repo.git.log(commit,'--', file,n=1,skip=1,format="%cd",date='unix')) # Time of previous commit
 	timeDiff.append(time1-time2);
 
-	numCommits.append(len(repo.git.log(commit, '--', file,format="%cd").splitlines())-1)
+	numCommits.append(len(repo.git.log(commit, '--', file,format="%cd").splitlines())-1) # Get times of all previous commits for file and get size
 	
-	authors=repo.git.log(commit, '--',file,format="%an").split("\n")
+	authors=repo.git.log(commit, '--',file,format="%an").split("\n") # Get all authors for file
+
+	# Save the authors against file name and count number of commits for each author
 	for a in authors:
 		if a not in authorPerFile[fileName]:
 			authorPerFile[fileName].append(a)
 		authorAndCommits[a] = authorAndCommits.get(a,0) + 1
 
-
+# GitPython stats to get number of insertions and deletions
 deletedLines = commit.stats.total['deletions']
 addedLines += commit.stats.total['insertions']
 
+# A 'git show' on our commit
 changes = repo.git.show(commitName)
 
+# Split the git show and count the number of blank and commented deletions/insertions
 for line in changes.splitlines():
 	if line:
 		if line[0] == '-':
